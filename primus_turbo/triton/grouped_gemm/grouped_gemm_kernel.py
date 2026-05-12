@@ -29,6 +29,8 @@ import triton
 import triton.language as tl
 
 from primus_turbo.triton.gemm.gemm_kernel import (
+    _calculate_lds_usage,
+    _get_hardware,
     _is_gfx950,
     _select_params_origami,
     _set_knobs_gfx950,
@@ -105,6 +107,13 @@ def _get_gg_bf16_fwd_config(avg_m, N, K, dtype_a, dtype_b, trans_b, G, num_sms):
             om, on, ok, ogm, oc_a, oc_b = origami_params
             if ogm >= 2 and om * on >= 256 * 256:
                 BLOCK_M, BLOCK_N, BLOCK_K, group_m, cache_a, cache_b = (om, on, ok, ogm, oc_a, oc_b)
+
+        while (
+            num_stages_val > 1
+            and _calculate_lds_usage(BLOCK_M, BLOCK_N, BLOCK_K, 2, 2, num_stages_val)
+            > _get_hardware().lds_capacity
+        ):
+            num_stages_val -= 1
 
     return BLOCK_M, BLOCK_N, BLOCK_K, group_m, cache_a, cache_b, num_stages_val, chunk_size
 

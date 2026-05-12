@@ -288,8 +288,7 @@ def _estimate_lds_bytes(block_m, block_n, block_k, elem_bytes_a, elem_bytes_b, n
     """LDS usage for Triton matmul tile without async_copy."""
     lds_a = block_m * block_k * elem_bytes_a
     lds_b = block_k * block_n * elem_bytes_b
-    base_buffers = max(1, num_stages - 1)
-    return (lds_a + lds_b) * base_buffers
+    return (lds_a + lds_b) * num_stages
 
 
 def _padded_size_32_4(unpadded_size):
