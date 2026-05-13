@@ -338,6 +338,17 @@ def _calculate_lds_usage(block_m, block_n, block_k, elem_bytes_a, elem_bytes_b, 
     return _estimate_lds_bytes(block_m, block_n, block_k, elem_bytes_a, elem_bytes_b, num_stages)
 
 
+def _clamp_stages_to_lds(block_m, block_n, block_k, elem_bytes_a, elem_bytes_b, num_stages):
+    """Decrement num_stages until estimated LDS fits the active arch's capacity."""
+    lds_cap = _get_hardware().lds_capacity
+    while (
+        num_stages > 1
+        and _calculate_lds_usage(block_m, block_n, block_k, elem_bytes_a, elem_bytes_b, num_stages) > lds_cap
+    ):
+        num_stages -= 1
+    return num_stages
+
+
 def _infer_mi_dim(hardware, element_size_a, element_size_b):
     """Infer matrix instruction dimensions from hardware and dtypes. Align with TensorAtlas."""
     n_cu = hardware.N_CU

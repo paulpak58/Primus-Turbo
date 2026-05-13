@@ -38,6 +38,7 @@ import triton.language as tl
 
 from primus_turbo.triton.gemm.gemm_kernel import (
     _calculate_lds_usage,
+    _clamp_stages_to_lds,
     _get_hardware,
     _is_gfx950,
     _select_params_origami,
@@ -169,6 +170,8 @@ def _get_gg_fp8_tw_fwd_config(
                 cache_a = oca
                 cache_b = ocb
 
+    num_stages_val = _clamp_stages_to_lds(blk_m, blk_n, blk_k, 1, 1, num_stages_val)
+
     return blk_m, blk_n, blk_k, group_m, cache_a, cache_b, num_stages_val, chunk_size, grid_sms
 
 
@@ -213,6 +216,8 @@ def _get_gg_fp8_tw_vk_config(OUT_M, OUT_N, avg_k, a_dtype, b_dtype, G, num_sms):
         num_stages_val = 2
         cache_a, cache_b = ".ca", ".ca"
         chunk_size = 32
+
+    num_stages_val = _clamp_stages_to_lds(blk_m, blk_n, blk_k, 1, 1, num_stages_val)
 
     return blk_m, blk_n, blk_k, group_m, cache_a, cache_b, num_stages_val, chunk_size
 
@@ -276,6 +281,8 @@ def _get_gg_fp8_rw_fwd_config(
         tiles_n = (N + blk_n - 1) // blk_n
         group_m = 8 if min(tiles_m_per_group, tiles_n) < 16 else 4
 
+    num_stages_val = _clamp_stages_to_lds(blk_m, blk_n, blk_k, 1, 1, num_stages_val)
+
     return blk_m, blk_n, blk_k, group_m, cache_a, cache_b, num_stages_val, chunk_size
 
 
@@ -320,6 +327,8 @@ def _get_gg_fp8_rw_vk_config(OUT_M, OUT_N, avg_k, a_dtype, b_dtype, G, num_sms):
         num_stages_val = 2
         cache_a, cache_b = ".ca", ".ca"
         chunk_size = 32
+
+    num_stages_val = _clamp_stages_to_lds(blk_m, blk_n, blk_k, 1, 1, num_stages_val)
 
     return blk_m, blk_n, blk_k, group_m, cache_a, cache_b, num_stages_val, chunk_size
 
